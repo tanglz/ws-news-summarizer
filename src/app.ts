@@ -1,44 +1,36 @@
-import { OpenAI, PromptTemplate } from "langchain";
-import { ChatOpenAI } from "langchain/chat_models";
-import { PlaywrightWebBaseLoader } from "langchain/document_loaders/web/playwright";
-
+import { OpenAI } from "langchain";
 import * as dotenv from "dotenv";
-import {Readability} from '@mozilla/readability';
-import { JSDOM } from "jsdom"
 dotenv.config();
 import { loadSummarizationChain } from "langchain/chains";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import {parseContentByPlaywright, parseContentByPostlight} from "./parseContent.js";
+import {fetchSecurityNews} from "./securityNews.js";
 
-const model = new OpenAI({
-    modelName: "gpt-3.5-turbo",
-    openAIApiKey: process.env.OPENAI_API_KEY,
-});
-
-
-const loader = new PlaywrightWebBaseLoader("https://longreads.com/2020/03/16/tiger-trafficking-in-america/",
-    {
-        launchOptions: {
-            headless: true,
-        },
-    }
-);
-
-const docs = await loader.load();
-const dom = new JSDOM(docs[0].pageContent);
-var article = new Readability(dom.window.document).parse();
-const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 2000 });
-// @ts-ignore
-const splittedDocs = await textSplitter.createDocuments([article.textContent]);
-
-// This convenience function creates a document chain prompted to summarize a set of documents.
-const chain = loadSummarizationChain(model, { type: "map_reduce" });
-const res = await chain.call({
-    input_documents: splittedDocs,
-});
-console.log( res );
-const sum = await model.call(
-    `Please summarize the following text in 3 bullet points:
+const run = async () => {
+    // fetch security news from graphql endpoint, return urls of news
+    const securityNews=await fetchSecurityNews("sec-s-2875ffa767cf4185bdd3a096726670c6", "2023-06-06");
+    const urls=securityNews.map((news:any)=>news.url);
+     for(const url of urls){
+        const content=await parseContentByPostlight(url);
+        const textSplitter = new RecursiveCharacterTextSplitter({chunkSize: 2000});
+        // @ts-ignore
+        const splittedDocs = await textSplitter.createDocuments([content]);
+        const model = new OpenAI({
+            modelName: "gpt-3.5-turbo",
+            openAIApiKey: process.env.OPENAI_API_KEY,
+        });
+        const chain = loadSummarizationChain(model, {type: "map_reduce"});
+        const res = await chain.call({
+            input_documents: splittedDocs,
+        });
+        const sum = await model.call(
+            `Please summarize the following text in 3 bullet points:
     ${res.text}
     `
-);
-console.log(sum)
+        );
+        console.log(url);
+        console.log(sum);
+    };
+
+}
+run();
