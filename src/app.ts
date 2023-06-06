@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import { loadSummarizationChain } from "langchain/chains";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import {parseContent} from "./parseContent.js";
+import {parseContentByPlaywright, parseContentByPostlight} from "./parseContent.js";
 import {fetchSecurityNews} from "./securityNews.js";
 
 const run = async () => {
@@ -11,7 +11,7 @@ const run = async () => {
     const securityNews=await fetchSecurityNews("sec-s-2875ffa767cf4185bdd3a096726670c6", "2023-06-06");
     const urls=securityNews.map((news:any)=>news.url);
      for(const url of urls){
-        const content=await parseContent(url);
+        const content=await parseContentByPostlight(url);
         const textSplitter = new RecursiveCharacterTextSplitter({chunkSize: 2000});
         // @ts-ignore
         const splittedDocs = await textSplitter.createDocuments([content]);

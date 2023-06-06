@@ -1,9 +1,10 @@
 import {PlaywrightWebBaseLoader} from "langchain/document_loaders/web/playwright";
 import {JSDOM} from "jsdom";
 import {Readability} from "@mozilla/readability";
-import {RecursiveCharacterTextSplitter} from "langchain/text_splitter";
+// @ts-ignore
+import Parser from '@postlight/parser';
 
-export async function parseContent(url: string) {
+export async function parseContentByPlaywright(url: string) {
     const loader = new PlaywrightWebBaseLoader(url,
         {
             launchOptions: {
@@ -18,4 +19,10 @@ export async function parseContent(url: string) {
     // @ts-ignore
     var content = new Readability(dom.window.document).parse().textContent;
     return content;
-}
+};
+
+export async function parseContentByPostlight(url: string) {
+    // @ts-ignore
+    let result = await Parser.parse(url, { contentType: 'text' });
+    return result.content;
+};
