@@ -24,5 +24,5 @@ export async function parseContentByPlaywright(url: string) {
 export async function parseContentByPostlight(url: string) {
     // @ts-ignore
     let result = await Parser.parse(url, { contentType: 'text' });
-    return result.content;
+    return result;
 };

@@ -3,18 +3,20 @@ import fs from "fs";
 export interface CSVRow {
     url: string;
     summary: string;
+    title: string;
+    tt: string;
 }
 
-export function insertRow(data: CSVRow[], url: string, summary: string): void {
-    const newRow: CSVRow = { url, summary };
+export function insertRow(data: CSVRow[], url: string, summary: string, title: string, tt:string): void {
+    const newRow: CSVRow = { url, summary,title, tt};
     data.push(newRow);
 }
 
 export function convertToCSV(data: CSVRow[]): string {
-    const header = Object.keys(data[0]).join(',') + '\n';
+    const header = Object.keys(data[0]).join('^') + '\n';
 
     const rows = data
-        .map((row) => Object.values(row).join(','))
+        .map((row) => Object.values(row).join('^'))
         .join('\n');
 
     return header + rows;
